@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Student Result Management System</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            background: #f4f6f9;
+        }
+        header {
+            background: #2c3e50;
+            color: white;
+            padding: 15px;
+            text-align: center;
+            font-size: 22px;
+        }
+        .container {
+            padding: 20px;
+        }
+        .card {
+            background: white;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        input, select {
+            padding: 8px;
+            margin: 5px;
+            width: 180px;
+        }
+        button {
+            padding: 8px 15px;
+            margin: 5px;
+            border: none;
+            background: #3498db;
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #2980b9;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        th, td {
+            padding: 10px;
+            border: 1px solid #ddd;
+            text-align: center;
+        }
+        th {
+            background: #34495e;
+            color: white;
+        }
+        .result-box {
+            font-weight: bold;
+            font-size: 18px;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    Student Result Management System
+</header>
+
+<div class="container">
+
+    <div class="card">
+        <h3>Add Student Marks</h3>
+        <input type="text" id="name" placeholder="Student Name">
+        <input type="number" id="math" placeholder="Math Marks">
+        <input type="number" id="science" placeholder="Science Marks">
+        <input type="number" id="english" placeholder="English Marks">
+        <button onclick="calculateResult()">Generate Result</button>
+    </div>
+
+    <div class="card">
+        <h3>Result Summary</h3>
+        <div class="result-box" id="result"></div>
+        <canvas id="resultChart" height="100"></canvas>
+    </div>
+
+    <div class="card">
+        <h3>Student Record</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Total</th>
+                    <th>Percentage</th>
+                    <th>Grade</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody id="recordTable"></tbody>
+        </table>
+    </div>
+
+</div>
+
+<script>
+    let myChart = null;
+
+    window.onload = function() {
+        fetch('/get_results')
+        .then(response => response.json())
+        .then(data => {
+            let table = document.getElementById("recordTable");
+            table.innerHTML = "";
+            data.forEach(student => {
+                table.innerHTML += `
+                    <tr>
+                        <td>${student.name}</td>
+                        <td>${student.total}</td>
+                        <td>${student.percentage.toFixed(2)}%</td>
+                        <td>${student.grade}</td>
+                        <td>${student.status}</td>
+                    </tr>
+                `;
+            });
+        })
+        .catch(error => console.error('Error:', error));
+    }
+
+    function calculateResult() {
+        let name = document.getElementById("name").value;
+        let math = parseInt(document.getElementById("math").value);
+        let science = parseInt(document.getElementById("science").value);
+        let english = parseInt(document.getElementById("english").value);
+
+        if (!name || isNaN(math) || isNaN(science) || isNaN(english)) {
+            alert("Please fill all the fields before generating the result!");
+            return;
+        }
+
+        fetch('/add_result', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                name: name,
+                math: math,
+                science: science,
+                english: english
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById("result").innerHTML =
+                "Total: " + data.total +
+                " | Percentage: " + data.percentage.toFixed(2) + "%" +
+                " | Grade: " + data.grade +
+                " | Status: " + data.status;
+
+            let table = document.getElementById("recordTable");
+            table.innerHTML += `
+                <tr>
+                    <td>${data.name}</td>
+                    <td>${data.total}</td>
+                    <td>${data.percentage.toFixed(2)}%</td>
+                    <td>${data.grade}</td>
+                    <td>${data.status}</td>
+                </tr>
+            `;
+
+            if (myChart != null) {
+                myChart.destroy();
+            }
+
+            const ctx = document.getElementById('resultChart').getContext('2d');
+            myChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Math', 'Science', 'English'],
+                    datasets: [{
+                        label: 'Marks',
+                        data: [math, science, english],
+                        backgroundColor: ['#3498db', '#2ecc71', '#e74c3c']
+                    }]
+                }
+            });
+
+            document.getElementById("name").value = "";
+            document.getElementById("math").value = "";
+            document.getElementById("science").value = "";
+            document.getElementById("english").value = "";
+        })
+        .catch(error => console.error('Error:', error));
+    }
+</script>
+
+</body>
+</html>
