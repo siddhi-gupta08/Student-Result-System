@@ -83,11 +83,15 @@ def delete(id):
 def view_db():
     if request.args.get('key') == 'admin123':
         results = StudentResult.query.all()
-        html = "<h2>Full Database Records</h2><table border='1'><tr><th>ID</th><th>Name</th><th>Password</th><th>Math</th><th>Science</th><th>English</th></tr>"
+        # Header mein Status aur Grade add kar diya hai
+        html = "<h2>Full Database Records</h2><table border='1' cellpadding='10' style='border-collapse:collapse;'>"
+        html += "<tr style='background:#eee;'><th>ID</th><th>Name</th><th>Password</th><th>Math</th><th>Science</th><th>English</th><th>Total</th><th>Percentage</th><th>Grade</th><th>Status</th></tr>"
+        
         for r in results:
-            html += f"<tr><td>{r.id}</td><td>{r.name}</td><td>{r.password}</td><td>{r.math}</td><td>{r.science}</td><td>{r.english}</td></tr>"
-        return html + "</table><br><a href='/'>Back</a>"
-    return "Wrong Key!"
-
+            # Table ke andar Status aur Grade display kar rahe hain
+            html += f"<tr><td>{r.id}</td><td>{r.name}</td><td>{r.password}</td><td>{r.math}</td><td>{r.science}</td><td>{r.english}</td><td>{r.total}</td><td>{r.percentage}%</td><td>{r.grade}</td><td>{r.status}</td></tr>"
+        
+        return html + "</table><br><a href='/'>Back to Home</a>"
+    return "Wrong Key! Access Denied."
 if __name__ == "__main__":
     app.run(debug=True)
