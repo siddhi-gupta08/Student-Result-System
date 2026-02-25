@@ -1,201 +1,133 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <title>Student Result Management System</title>
+    <title>School Management System</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            background: #f4f6f9;
-        }
-        header {
-            background: #2c3e50;
-            color: white;
-            padding: 15px;
-            text-align: center;
-            font-size: 22px;
-        }
-        .container {
-            padding: 20px;
-        }
-        .card {
-            background: white;
-            padding: 20px;
-            margin-bottom: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        }
-        input, select {
-            padding: 8px;
-            margin: 5px;
-            width: 180px;
-        }
-        button {
-            padding: 8px 15px;
-            margin: 5px;
-            border: none;
-            background: #3498db;
-            color: white;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-        button:hover {
-            background: #2980b9;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 15px;
-        }
-        th, td {
-            padding: 10px;
-            border: 1px solid #ddd;
-            text-align: center;
-        }
-        th {
-            background: #34495e;
-            color: white;
-        }
-        .result-box {
-            font-weight: bold;
-            font-size: 18px;
-        }
+        body { font-family: 'Segoe UI', sans-serif; background: #f4f7f9; margin: 0; }
+        .overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: #2c3e50; display:flex; justify-content:center; align-items:center; z-index:1000; }
+        .login-card { background: white; padding: 40px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); width: 320px; text-align: center; }
+        .dashboard { display: none; padding: 30px; }
+        .card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-bottom: 25px; }
+        input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
+        button { width: 100%; padding: 12px; background: #3498db; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { padding: 15px; border-bottom: 1px solid #eee; text-align: center; }
+        th { background: #34495e; color: white; }
+        .pie-box { width: 350px; margin: 20px auto; }
+        .status-pass { color: green; font-weight: bold; }
+        .status-fail { color: red; font-weight: bold; }
     </style>
 </head>
 <body>
 
-<header>
-    Student Result Management System
-</header>
-
-<div class="container">
-
-    <div class="card">
-        <h3>Add Student Marks</h3>
-        <input type="text" id="name" placeholder="Student Name">
-        <input type="number" id="math" placeholder="Math Marks">
-        <input type="number" id="science" placeholder="Science Marks">
-        <input type="number" id="english" placeholder="English Marks">
-        <button onclick="calculateResult()">Generate Result</button>
+<div id="loginOverlay" class="overlay">
+    <div class="login-card">
+        <h2>Portal Login</h2>
+        <input type="text" id="uName" placeholder="Username">
+        <input type="password" id="uPass" placeholder="Password">
+        <button onclick="doLogin()">Login</button>
+        <p style="font-size: 11px; color: #7f8c8d; margin-top: 15px;">Teacher: admin / admin | Student: Name / 1234</p>
     </div>
+</div>
 
+<div id="teacherView" class="dashboard">
+    <h1 style="color: #2c3e50;">👨‍🏫 Teacher Dashboard</h1>
     <div class="card">
-        <h3>Result Summary</h3>
-        <div class="result-box" id="result"></div>
-        <canvas id="resultChart" height="100"></canvas>
+        <h3>Add New Entry</h3>
+        <div style="display: flex; gap: 10px;">
+            <input type="text" id="n" placeholder="Name">
+            <input type="number" id="m" placeholder="Math">
+            <input type="number" id="s" placeholder="Science">
+            <input type="number" id="e" placeholder="English">
+            <button onclick="saveData()" style="width: 200px;">Save Result</button>
+        </div>
     </div>
-
     <div class="card">
-        <h3>Student Record</h3>
-        <table>
-            <thead>
-                <tr>
-                    <th>Name</th>
-                    <th>Total</th>
-                    <th>Percentage</th>
-                    <th>Grade</th>
-                    <th>Status</th>
-                </tr>
-            </thead>
-            <tbody id="recordTable"></tbody>
+        <h3>Rank List & Records</h3>
+        <table id="tTable">
+            <thead><tr><th>Name</th><th>Total</th><th>%</th><th>Grade</th><th>Status</th><th>Action</th></tr></thead>
+            <tbody></tbody>
         </table>
     </div>
+</div>
 
+<div id="studentView" class="dashboard">
+    <h1 style="color: #2c3e50;">🎓 Student Report Card</h1>
+    <div class="card" style="text-align: center;">
+        <h2 id="sWelcome"></h2>
+        <div id="sMeta" style="font-size: 20px; margin: 20px 0;"></div>
+        <div class="pie-box"><canvas id="sChart"></canvas></div>
+        <button onclick="location.reload()" style="background:#95a5a6; width: 150px;">Logout</button>
+    </div>
 </div>
 
 <script>
-    let myChart = null;
-
-    window.onload = function() {
-        fetch('/get_results')
-        .then(response => response.json())
-        .then(data => {
-            let table = document.getElementById("recordTable");
-            table.innerHTML = "";
-            data.forEach(student => {
-                table.innerHTML += `
-                    <tr>
-                        <td>${student.name}</td>
-                        <td>${student.total}</td>
-                        <td>${student.percentage.toFixed(2)}%</td>
-                        <td>${student.grade}</td>
-                        <td>${student.status}</td>
-                    </tr>
-                `;
-            });
-        })
-        .catch(error => console.error('Error:', error));
+    function doLogin() {
+        const name = document.getElementById('uName').value;
+        const password = document.getElementById('uPass').value;
+        fetch('/login', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({name, password})
+        }).then(r => r.json()).then(res => {
+            if(res.role === 'teacher') {
+                document.getElementById('loginOverlay').style.display='none';
+                document.getElementById('teacherView').style.display='block';
+                loadAll();
+            } else if(res.role === 'student') {
+                document.getElementById('loginOverlay').style.display='none';
+                document.getElementById('studentView').style.display='block';
+                showReport(res.data);
+            } else { alert(res.message); }
+        });
     }
 
-    function calculateResult() {
-        let name = document.getElementById("name").value;
-        let math = parseInt(document.getElementById("math").value);
-        let science = parseInt(document.getElementById("science").value);
-        let english = parseInt(document.getElementById("english").value);
+    function showReport(d) {
+        document.getElementById('sWelcome').innerText = "Performance Summary: " + d.name;
+        document.getElementById('sMeta').innerHTML = `
+            Percentage: <b>${d.percentage}%</b> | Grade: <b>${d.grade}</b> | 
+            Status: <span class="${d.status=='Pass'?'status-pass':'status-fail'}">${d.status}</span>
+        `;
+        new Chart(document.getElementById('sChart'), {
+            type: 'pie',
+            data: {
+                labels: ['Math', 'Science', 'English'],
+                datasets: [{ data: [d.math, d.science, d.english], backgroundColor: ['#3498db', '#2ecc71', '#e74c3c'] }]
+            }
+        });
+    }
 
-        if (!name || isNaN(math) || isNaN(science) || isNaN(english)) {
-            alert("Please fill all the fields before generating the result!");
-            return;
-        }
+    function loadAll() {
+        fetch('/get_all').then(r => r.json()).then(data => {
+            const b = document.querySelector('#tTable tbody');
+            b.innerHTML = data.map(i => `
+                <tr>
+                    <td>${i.name}</td><td>${i.total}</td><td>${i.percentage}%</td><td>${i.grade}</td>
+                    <td class="${i.status=='Pass'?'status-pass':'status-fail'}">${i.status}</td>
+                    <td><button onclick="del(${i.id})" style="background:#e74c3c; padding: 5px 10px;">Delete</button></td>
+                </tr>
+            `).join('');
+        });
+    }
 
+    function saveData() {
+        const payload = {
+            name: document.getElementById('n').value,
+            math: document.getElementById('m').value,
+            science: document.getElementById('s').value,
+            english: document.getElementById('e').value
+        };
         fetch('/add_result', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                name: name,
-                math: math,
-                science: science,
-                english: english
-            })
-        })
-        .then(response => response.json())
-        .then(data => {
-            document.getElementById("result").innerHTML =
-                "Total: " + data.total +
-                " | Percentage: " + data.percentage.toFixed(2) + "%" +
-                " | Grade: " + data.grade +
-                " | Status: " + data.status;
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(payload)
+        }).then(() => { alert("Saved!"); loadAll(); });
+    }
 
-            let table = document.getElementById("recordTable");
-            table.innerHTML += `
-                <tr>
-                    <td>${data.name}</td>
-                    <td>${data.total}</td>
-                    <td>${data.percentage.toFixed(2)}%</td>
-                    <td>${data.grade}</td>
-                    <td>${data.status}</td>
-                </tr>
-            `;
-
-            if (myChart != null) {
-                myChart.destroy();
-            }
-
-            const ctx = document.getElementById('resultChart').getContext('2d');
-            myChart = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: ['Math', 'Science', 'English'],
-                    datasets: [{
-                        label: 'Marks',
-                        data: [math, science, english],
-                        backgroundColor: ['#3498db', '#2ecc71', '#e74c3c']
-                    }]
-                }
-            });
-
-            document.getElementById("name").value = "";
-            document.getElementById("math").value = "";
-            document.getElementById("science").value = "";
-            document.getElementById("english").value = "";
-        })
-        .catch(error => console.error('Error:', error));
+    function del(id) {
+        if(confirm("Are you sure?")) fetch('/delete/'+id, {method:'DELETE'}).then(() => loadAll());
     }
 </script>
-
 </body>
 </html>
