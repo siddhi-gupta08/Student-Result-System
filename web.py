@@ -125,6 +125,11 @@ def delete(id):
 
     return jsonify({"success": True})
 
+
+@app.route('/notice')
+def notice():
+    return render_template('notice.html')
+
 @app.route('/view_db')
 def view_db():
     if request.args.get('key') == 'admin123':

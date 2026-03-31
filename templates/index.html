@@ -34,6 +34,92 @@
     .teacher-inputs input { padding: 10px; border: 1px solid #ddd; border-radius: 6px; flex: 1; }
     .teacher-inputs button { padding: 10px 20px; background: #27ae60; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
 
+    /*REVALUATION FORM */
+.form-group {
+  margin-bottom: 15px;
+}
+
+.form-group label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 5px;
+}
+
+.form-group input,
+.form-group textarea {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+}
+
+.form-group textarea {
+  resize: none; /* ❌ disables stretching */
+  height: 80px;
+}
+
+.submit-btn {
+  background: #2563eb;
+  color: white;
+  padding: 12px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  width: 100%;
+  font-weight: bold;
+}
+
+.instructions {
+  background: #f1f5f9;
+  padding: 10px;
+  border-radius: 8px;
+  margin-bottom: 15px;
+}
+
+body.dark .card {
+  background: #1f2937;
+  color: white;
+}
+
+body.dark input,
+body.dark textarea {
+  background: #111827;
+  color: white;
+  border: 1px solid #374151;
+}
+
+body.dark label {
+  color: #e5e7eb;
+}
+
+body.dark .instructions {
+  background: #374151;
+  color: #f9fafb;
+}
+
+/*pay button styling*/
+.pay-btn {
+  flex: 1;
+  background: #16a34a;
+  color: white;
+  padding: 12px;
+  border: none;
+  border-radius: 6px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.submit-btn {
+  flex: 1;
+  background: #2563eb;
+  color: white;
+  padding: 12px;
+  border: none;
+  border-radius: 6px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
     /* Student Specific */
     .sidebar { width: 250px; height: 100vh; position: fixed; background: #1e293b; color: white; padding: 20px; overflow-y: auto; z-index: 1000; display: none; }
     .sidebar h2 { text-align: center; }
@@ -63,6 +149,34 @@
         <button onclick="location.reload()" style="padding: 10px 20px; background: #e74c3c; color: white; border: none; border-radius: 6px; cursor: pointer;">Logout</button>
     </div>
 
+<div class="card">
+  <h3>📢 Manage Notices</h3>
+
+  <input type="text" id="nTitle" placeholder="Title" style="width:100%; padding:10px; margin-bottom:10px;">
+  
+  <textarea id="nText" placeholder="Write notice..." style="width:100%; padding:10px;"></textarea>
+
+  <input type="date" id="nDate" style="width:100%; padding:10px; margin-top:10px;">
+
+  <button onclick="addNotice()" 
+    style="margin-top:10px; background:#2563eb; color:white; padding:10px; border:none; border-radius:6px;">
+    Post Notice
+  </button>
+
+  <h4 style="margin-top:20px;">Posted Notices</h4>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Date</th>
+        <th>Title</th>
+        <th>Notice</th>
+      </tr>
+    </thead>
+    <tbody id="teacherNoticeTable"></tbody>
+  </table>
+</div>
+
     <div class="card">
         <h3>Add New Student Result</h3>
         <div class="teacher-inputs">
@@ -90,8 +204,70 @@
             </thead>
             <tbody></tbody>
         </table>
+
+
+        <div class="card">
+<h3>Class Analytics</h3>
+
+<div class="chart-grid">
+
+<div class="chart-box">
+<h4>Pass vs Fail</h4>
+<canvas id="passFailChart"></canvas>
+</div>
+
+<div class="chart-box">
+<h4>Subject Average Marks</h4>
+<canvas id="subjectAvgChart"></canvas>
+</div>
+
+<div class="chart-box">
+<h4>Top 5 Students</h4>
+<canvas id="topStudentsChart"></canvas>
+</div>
+
+<div class="chart-box">
+<h4>Attendance Distribution</h4>
+<canvas id="attendanceChart"></canvas>
+</div>
+
+<div class="chart-box chart-large">
+<h4>Class Performance Trend</h4>
+<canvas id="classTrendChart"></canvas>
+</div>
+
+</div>
+
+</div>
+
+<style>
+    .chart-grid{
+display:grid;
+grid-template-columns:1fr 1fr;
+gap:20px;
+margin-top:20px;
+}
+
+.chart-box{
+background:white;
+padding:20px;
+border-radius:10px;
+box-shadow:0 4px 10px rgba(0,0,0,0.08);
+text-align:center;
+}
+
+.chart-box canvas{
+max-height:250px;
+}
+
+.chart-large{
+grid-column:1/3;
+}
+</style>
+
     </div>
 </div>
+ 
 
 <div id="studentSidebar" class="sidebar">
   <h2>Dashboard</h2>
@@ -105,8 +281,10 @@
   <div class="menu-item" onclick="showSection('charts')">Performance charts</div>
   <div class="menu-item" onclick="showSection('attendance')">Attendance overview</div>
   <div class="menu-item" onclick="showSection('notifications')">Notifications</div>
+  <div class="menu-item" onclick="showSection('Notice Board')"> Notice Board</div>
   <div class="menu-item" onclick="toggleDark()">Dark / Light mode</div>
   <div class="menu-item" onclick="location.reload()">Secure logout</div>
+  <div class="menu-item" onclick="showSection('Revaluation Form')">Revaluation Form</div>
 </div>
 
 <div id="studentMain" class="main">
@@ -117,6 +295,68 @@
       <button class="btn-green" onclick="alert('PDF Feature Coming Soon!')">Download Marksheet</button>
     </div>
   </div>
+
+
+<div id="Notice Board" class="card section">
+  <h3>📢 Notice Board</h3>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Date</th>
+        <th>Title</th>
+        <th>Notice</th>
+      </tr>
+    </thead>
+    <tbody id="studentNoticeTable"></tbody>
+  </table>
+</div>
+
+
+<div id="Revaluation Form" class="card section">
+    <h3>Revaluation Form</h3>
+    <div class="instructions">
+<h4>📌 Instructions:</h4>
+<ul>
+<li>Enter correct subject name</li>
+<li>Provide valid reason for revaluation</li>
+<li>Upload answer sheet (optional)</li>
+<li>Upload your signature (mandatory)</li>
+<li>Complete payment before submitting</li>
+</ul>
+</div>
+
+<form method="POST" enctype="multipart/form-data">
+
+<div class="form-group">
+<label>Subject</label>
+<input type="text" name="subject" required>
+</div>
+
+<div class="form-group">
+<label>Reason</label>
+<textarea name="reason" required></textarea>
+</div>
+
+<div class="form-group">
+<label>Upload Answer Sheet</label>
+<input type="file" name="photo">
+</div>
+
+<div class="form-group">
+<label>Upload Signature</label>
+<input type="file" name="signature" required>
+</div>
+
+<div style="display:flex; gap:15px; margin-top:20px;">
+  <button type="button" class="pay-btn" onclick="payFees()">💳 Pay ₹500</button>
+  <button type="submit" class="submit-btn" onclick="submitForm()">📩 Submit Request</button>
+</div>
+
+</form>
+
+</div>
+
 
   <div id="profile" class="card section" style="display:block;">
     <h3>Profile Details</h3>
@@ -177,6 +417,19 @@
   </div>
 </div>
 
+
+  <!-- Teacher Only Section -->
+  <div id="noticeAdmin" style="display:none;">
+    <h4>Post Notice</h4>
+    <input type="text" id="noticeTitle" placeholder="Title" style="width:100%; padding:10px; margin-bottom:10px;">
+    <textarea id="noticeText" placeholder="Write notice..." style="width:100%; padding:10px;"></textarea>
+    <button onclick="addNotice()" style="margin-top:10px;">Post Notice</button>
+  </div>
+ 
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 <script>
   // --- COMMON LOGIN LOGIC ---
   function doLogin() {
@@ -189,15 +442,19 @@
           body: JSON.stringify({name, password})
       }).then(r => r.json()).then(res => {
           if(res.role === 'teacher') {
+              document.getElementById("noticeAdmin");                                 
               document.getElementById('loginOverlay').style.display = 'none';
               document.getElementById('teacherView').style.display = 'block';
               loadTeacherData();
+              loadNotices();
+             document.getElementById("noticeAdmin") ;
           } else if(res.role === 'student') {
               document.getElementById('loginOverlay').style.display = 'none';
               document.getElementById('studentSidebar').style.display = 'block';
               document.getElementById('studentMain').style.display = 'block';
               setupStudentDashboard(res.data);
               loadStudentRankList(); 
+               loadNotices();
           } else { 
               alert("Login failed! Check your credentials."); 
           }
@@ -215,6 +472,7 @@
                   <td><button class="btn-delete" onclick="delRecord(${i.id})">Delete</button></td>
               </tr>
           `).join('');
+          createTeacherCharts(data);
       });
   }
 
@@ -240,6 +498,7 @@
           document.getElementById('t_s').value = '';
           document.getElementById('t_e').value = '';
           loadTeacherData(); 
+          setTimeout(()=>loadTeacherData(),200);
       });
   }
 
@@ -297,6 +556,225 @@
           ).join('');
       });
   }
+
+
+
+function createTeacherCharts(data){
+    Chart.helpers.each(Chart.instances, function(instance){
+instance.destroy();
+});
+
+let pass = data.filter(s => s.status=="Pass").length
+let fail = data.filter(s => s.status=="Fail").length
+
+new Chart(document.getElementById("passFailChart"),{
+type:'pie',
+data:{
+labels:["Pass","Fail"],
+datasets:[{data:[pass,fail]}]
+}
+})
+let avgMath =
+data.reduce((sum,s)=>sum + Number(s.math),0)/data.length
+
+let avgScience =
+data.reduce((sum,s)=>sum + Number(s.science),0)/data.length
+
+let avgEnglish =
+data.reduce((sum,s)=>sum + Number(s.english),0)/data.length
+
+
+new Chart(document.getElementById("subjectAvgChart"),{
+type:"bar",
+data:{
+labels:["Math","Science","English"],
+datasets:[{
+label:"Average Marks",
+data:[avgMath,avgScience,avgEnglish],
+backgroundColor:["#3498db","#2ecc71","#f39c12"]
+}]
+}
+})
+
+let top = [...data].sort((a,b)=>b.percentage-a.percentage).slice(0,5)
+
+new Chart(document.getElementById("topStudentsChart"),{
+type:'bar',
+data:{
+labels:top.map(s=>s.name),
+datasets:[{label:"Top Students",data:top.map(s=>s.percentage)}]
+}
+})
+
+new Chart(document.getElementById("attendanceChart"),{
+type:'doughnut',
+data:{
+labels:["Present","Absent"],
+datasets:[{data:[85,15]}]
+}
+})
+
+let trend = data.map(s=>s.percentage)
+
+new Chart(document.getElementById("classTrendChart"),{
+type:'line',
+data:{
+labels:data.map(s=>s.name),
+datasets:[{label:"Class Performance",data:trend}]
+}
+})
+
+}
+
+function payFees() {
+    alert("Processing Payment...");
+
+    setTimeout(() => {
+        alert("✅ Payment Successful!\nFurther updates will be sent to your email.");
+
+        document.querySelector("form").reset(); // clear form
+    }, 1000);
+}
+
+let paymentDone = false;
+
+function payFees() {
+    alert("Redirecting to payment...");
+
+    setTimeout(() => {
+        paymentDone = true;
+        alert("✅ Payment Successful!\nNow you can submit your request.");
+    }, 1000);
+}
+
+function submitForm() {
+    if (!paymentDone) {
+        alert("⚠️ Please complete payment first!");
+        return;
+    }
+
+    alert("✅ Revaluation request submitted successfully!");
+
+    document.querySelector("form").reset();
+
+    paymentDone = false;
+}
+
+document.getElementById('valNote').innerText =
+"Revaluation request submitted & payment received.";
+showSection('profile');
+
+let revalData = [];
+
+function addRevalRequest(data){
+    data.status = "Pending";
+    data.payment = "Paid";
+    revalData.push(data);
+    loadExamTable();
+}
+
+function loadExamTable(){
+    const tbody = document.querySelector("#examTable tbody");
+
+    tbody.innerHTML = revalData.map((r, index) => `
+        <tr>
+            <td>${r.name}</td>
+            <td>${r.subject}</td>
+            <td>${r.reason}</td>
+            <td>${r.payment}</td>
+            <td>${r.status}</td>
+            <td>
+                <button onclick="approveReq(${index})" style="background:#16a34a;color:white;border:none;padding:5px 10px;border-radius:4px;">Approve</button>
+                <button onclick="rejectReq(${index})" style="background:#dc2626;color:white;border:none;padding:5px 10px;border-radius:4px;">Reject</button>
+            </td>
+        </tr>
+    `).join('');
+}
+
+function approveReq(i){
+    revalData[i].status = "Approved";
+    alert("✅ Request Approved");
+    loadExamTable();
+}
+
+function rejectReq(i){
+    revalData[i].status = "Rejected";
+    alert("❌ Request Rejected");
+    loadExamTable();
+}
+
+function addNotice(){
+    const title = document.getElementById("nTitle").value;
+    const text = document.getElementById("nText").value;
+    const date = document.getElementById("nDate").value;
+
+    if(!title || !text || !date){
+        alert("Fill all fields!");
+        return;
+    }
+
+    let notices = JSON.parse(localStorage.getItem("notices")) || [];
+
+    notices.push({title, text, date});
+
+    localStorage.setItem("notices", JSON.stringify(notices));
+
+    alert("Notice Posted!");
+
+    document.getElementById("nTitle").value = "";
+    document.getElementById("nText").value = "";
+    document.getElementById("nDate").value = "";
+
+    loadNotices();
+}
+
+function loadNotices(){
+    let notices = JSON.parse(localStorage.getItem("notices")) || [];
+
+// SORT BY DATE (old → new)
+notices.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+    // Teacher table
+    const teacherTable = document.getElementById("teacherNoticeTable");
+    if(teacherTable){
+        teacherTable.innerHTML = notices.map((n, index) => `
+    <tr>
+        <td>${n.date}</td>
+        <td>${n.title}</td>
+        <td>${n.text}</td>
+        <td>
+            <button onclick="deleteNotice(${index})" 
+            style="background:#dc2626;color:white;border:none;padding:5px 10px;border-radius:4px;">
+            Delete
+            </button>
+        </td>
+    </tr>
+`).join('');
+  }
+
+    // Student table
+    const studentTable = document.getElementById("studentNoticeTable");
+    if(studentTable){
+        studentTable.innerHTML = notices.map(n => `
+            <tr>
+                <td>${n.date}</td>
+                <td>${n.title}</td>
+                <td>${n.text}</td>
+            </tr>
+        `).join('');
+    }
+}
+
+function deleteNotice(index){
+    let notices = JSON.parse(localStorage.getItem("notices")) || [];
+
+    if(confirm("Delete this notice?")){
+        notices.splice(index, 1);
+        localStorage.setItem("notices", JSON.stringify(notices));
+        loadNotices();
+    }
+}
+
 </script>
 
 </body>
