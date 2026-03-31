@@ -1,16 +1,25 @@
 from flask import Flask, render_template, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
+from flask_mail import Mail,Message
+import threading 
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///college_final_v6.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///college_final_v7.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
+app.config['MAIL_SERVER'] = 'smtp.gmail.com'
+app.config['MAIL_PORT'] = 587
+app.config['MAIL_USE_TLS'] = True
+app.config['MAIL_USERNAME'] = 'siddhigupta0808@gmail.com' 
+app.config['MAIL_PASSWORD'] = 'zzvrmzlfsicrwqim'    
+mail = Mail(app)
 
 class StudentResult(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
     password = db.Column(db.String(20), default="1234")
     email = db.Column(db.String(100))
+    parent_email = db.Column(db.String(100),nullable=False)
     student_class = db.Column(db.String(50))
     attendance = db.Column(db.Integer)
     semester = db.Column(db.Integer)
@@ -56,6 +65,10 @@ def login():
         })
     return jsonify({"role": "error", "message": "Invalid credentials!"})
 
+def send_async_email(app, msg):
+    with app.app_context():
+        mail.send(msg)
+
 @app.route('/add_result', methods=['POST'])
 def add_result():
     data = request.get_json()
@@ -73,11 +86,23 @@ def add_result():
     new_entry = StudentResult(
         name=data['name'], math=m, science=s, english=e,
         total=total, percentage=per, grade=grade, status=status,
-        email=gen_email, student_class="SY AIDS", attendance=85, 
+        email=gen_email,
+        parent_email=data['parent_email'],  
+        student_class="SY AIDS", attendance=85, 
         semester=1, cgpa=cgpa_val, sgpa=cgpa_val
     )
     db.session.add(new_entry)
     db.session.commit()
+
+    # Email message taiyar karna
+    msg = Message(f"Result Update: {data['name']}",
+                  sender=app.config['MAIL_USERNAME'],
+                  recipients=[data['parent_email']])
+    
+    msg.body = f"Hello,\n\n The result for {data['name']} has been uploaded.\nMath: {m}, Science: {s}, English: {e}\nTotal: {total}\nPercentage: {per}%\nStatus: {status}\n\nRegards,\nCollege Admin"
+
+    threading.Thread(target=send_async_email, args=(app, msg)).start()
+
     return jsonify({"success": True})
 
 
@@ -91,8 +116,13 @@ def get_all():
 
 @app.route('/delete/<int:id>', methods=['DELETE'])
 def delete(id):
-    db.session.delete(StudentResult.query.get(id))
-    db.session.commit()
+    
+    student_to_delete = db.session.get(StudentResult, id)
+    if student_to_delete:
+        db.session.delete(student_to_delete)
+
+        db.session.commit()
+
     return jsonify({"success": True})
 
 @app.route('/view_db')

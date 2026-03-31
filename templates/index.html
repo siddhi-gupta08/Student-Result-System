@@ -67,6 +67,7 @@
         <h3>Add New Student Result</h3>
         <div class="teacher-inputs">
             <input type="text" id="t_n" placeholder="Student Name">
+             <input type="email" id="t_p_email" placeholder="Parent Email ID">
             <input type="number" id="t_m" placeholder="Math">
             <input type="number" id="t_s" placeholder="Science">
             <input type="number" id="t_e" placeholder="English">
@@ -220,12 +221,13 @@
   function saveData() {
       const payload = {
           name: document.getElementById('t_n').value,
+          parent_email: document.getElementById('t_p_email').value,
           math: parseInt(document.getElementById('t_m').value),
           science: parseInt(document.getElementById('t_s').value),
           english: parseInt(document.getElementById('t_e').value)
       };
 
-      if(!payload.name || isNaN(payload.math)) { alert("Please fill all fields!"); return; }
+      if(!payload.name || !payload.parent_email || isNaN(payload.math)) { alert("Please fill all fields!"); return; }
 
       fetch('/add_result', {
           method: 'POST',
